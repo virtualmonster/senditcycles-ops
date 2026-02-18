@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: senditcycles-db-dev
+    environment:
+      POSTGRES_USER: ${DB_USER:-senditcycles}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword123}
+      POSTGRES_DB: ${DB_NAME:-senditcycles_dev}
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ../../../senditcycles/server/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-senditcycles}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - senditcycles-dev
+
+  backend:
+    build:
+      context: ../../../senditcycles/server
+      dockerfile: Dockerfile
+    container_name: senditcycles-api-dev
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-senditcycles}
+      DB_PASSWORD: ${DB_PASSWORD:-devpassword123}
+      DB_NAME: ${DB_NAME:-senditcycles_dev}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-change-in-prod}
+      LOG_LEVEL: debug
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../../../senditcycles/server/src:/app/src
+    networks:
+      - senditcycles-dev
+
+  frontend:
+    build:
+      context: ../../../senditcycles/client
+      dockerfile: Dockerfile
+    container_name: senditcycles-web-dev
+    environment:
+      VITE_API_URL: http://localhost:3001
+      NODE_ENV: development
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - senditcycles-dev
+
+volumes:
+  postgres_data_dev:
+    driver: local
+
+networks:
+  senditcycles-dev:
+    driver: bridge

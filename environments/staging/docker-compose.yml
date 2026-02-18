@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: senditcycles-db-staging
+    environment:
+      POSTGRES_USER: ${DB_USER:-senditcycles}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-senditcycles_staging}
+    volumes:
+      - postgres_data_staging:/var/lib/postgresql/data
+      - ../../../senditcycles/server/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-senditcycles}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - senditcycles-staging
+
+  backend:
+    build:
+      context: ../../../senditcycles/server
+      dockerfile: Dockerfile
+    container_name: senditcycles-api-staging
+    environment:
+      NODE_ENV: staging
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-senditcycles}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-senditcycles_staging}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: info
+    ports:
+      - "3002:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - senditcycles-staging
+
+  frontend:
+    build:
+      context: ../../../senditcycles/client
+      dockerfile: Dockerfile
+    container_name: senditcycles-web-staging
+    environment:
+      VITE_API_URL: http://staging-api.senditcycles.internal:3001
+      NODE_ENV: staging
+    ports:
+      - "3010:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - senditcycles-staging
+
+volumes:
+  postgres_data_staging:
+    driver: local
+
+networks:
+  senditcycles-staging:
+    driver: bridge
