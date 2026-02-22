@@ -8,6 +8,7 @@ services:
       NODE_ENV: staging
       USE_SQLITE: "true"
       SQLITE_PATH: /data/senditcycles.db
+      PORT: "3001"
       JWT_SECRET: ${JWT_SECRET}
       LOG_LEVEL: info
     expose:
