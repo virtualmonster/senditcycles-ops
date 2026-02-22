@@ -10,7 +10,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-senditcycles_dev}
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data
-      - ../../../senditcycles/server/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./config/init.sql:/docker-entrypoint-initdb.d/01-init.sql
     ports:
       - "5432:5432"
     healthcheck:
