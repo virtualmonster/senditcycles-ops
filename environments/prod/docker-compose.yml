@@ -1,45 +1,19 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:14-alpine
-    container_name: senditcycles-db-prod
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME:-senditcycles_prod}
-    volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
-      - ./config/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./config/postgres-backup.sh:/usr/local/bin/postgres-backup.sh:ro
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: always
-    networks:
-      - senditcycles-prod
-
   backend:
     image: 10.0.2.16:5000/senditcycles-api:latest
     container_name: senditcycles-api-prod
     environment:
       NODE_ENV: production
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME:-senditcycles_prod}
+      USE_SQLITE: "true"
+      SQLITE_PATH: /data/senditcycles.db
       JWT_SECRET: ${JWT_SECRET}
       LOG_LEVEL: warn
     expose:
       - "3001"
-    depends_on:
-      postgres:
-        condition: service_healthy
+    volumes:
+      - sqlite_data_prod:/data
     restart: always
     networks:
       - senditcycles-prod
@@ -84,7 +58,7 @@ services:
       retries: 3
 
 volumes:
-  postgres_data_prod:
+  sqlite_data_prod:
     driver: local
 
 networks:
