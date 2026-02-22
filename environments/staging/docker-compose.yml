@@ -23,9 +23,7 @@ services:
       - senditcycles-staging
 
   backend:
-    build:
-      context: ../../../senditcycles/server
-      dockerfile: Dockerfile
+    image: 10.0.2.16:5000/senditcycles-api:latest
     container_name: senditcycles-api-staging
     environment:
       NODE_ENV: staging
@@ -46,9 +44,7 @@ services:
       - senditcycles-staging
 
   frontend:
-    build:
-      context: ../../../senditcycles/client
-      dockerfile: Dockerfile
+    image: 10.0.2.16:5000/senditcycles-web:latest
     container_name: senditcycles-web-staging
     environment:
       VITE_API_URL: http://staging-api.senditcycles.internal/api

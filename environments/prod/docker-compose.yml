@@ -24,9 +24,7 @@ services:
       - senditcycles-prod
 
   backend:
-    build:
-      context: ../../../senditcycles/server
-      dockerfile: Dockerfile
+    image: 10.0.2.16:5000/senditcycles-api:latest
     container_name: senditcycles-api-prod
     environment:
       NODE_ENV: production
@@ -47,9 +45,7 @@ services:
       - senditcycles-prod
 
   frontend:
-    build:
-      context: ../../../senditcycles/client
-      dockerfile: Dockerfile
+    image: 10.0.2.16:5000/senditcycles-web:latest
     container_name: senditcycles-web-prod
     environment:
       VITE_API_URL: https://api.senditcycles.com/api
